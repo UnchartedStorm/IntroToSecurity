@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 class State:
     def __init__(self, plaintext) -> None:
@@ -16,6 +17,9 @@ class State:
 
 class AES:
     def __init__(self) -> None:
+        # s_box is simply an affine transformation(i.e. matrix mulitplication followed by a vector addition) 
+        # of the inverse of the input byte. Possible to do that instead of using a lookup table.
+
         # AES S-box
         self.s_box = [
             # 0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
@@ -58,10 +62,97 @@ class AES:
             0x17,0x2b,0x04,0x7e,0xba,0x77,0xd6,0x26,0xe1,0x69,0x14,0x63,0x55,0x21,0x0c,0x7d  # F
         ]
 
+    
     def sub_bytes(self, state) -> None:
         for i in range(4):
             for j in range(4):
                 state[i][j] = aes.s_box[state[i][j]]
+
+    def inv_sub_bytes(self, state) -> None:
+        for i in range(4):
+            for j in range(4):
+                state[i][j] = aes.inv_s_box[state[i][j]]
+
+    def shift_rows(self, state) -> None:
+        for i in range(4):
+            state[i] = state[i][i:] + state[i][:i]
+
+    def inv_shift_rows(self, state) -> None:
+        for i in range(4):
+            state[i] = state[i][-i:] + state[i][:-i]
+
+    
+    # multiplying by 2 in GF(2^8)
+    # used in mix_columns
+    def xtimes(x):
+        # if MSB is 1, then it will overflow
+        if x & 0x80:
+            return ((x << 1) ^ 0x11B)
+            # (x << 1) ^ 0x1B) & 0xFF also does the same thing
+        return x << 1
+        
+    
+    def mix_columns(self, state) -> None:
+        for i in range(4):
+            a = state[i][0]
+            b = state[i][1]
+            c = state[i][2]
+            d = state[i][3]
+
+            state[i][0] = aes.xtimes(a) ^ b ^ aes.xtimes(b) ^ c ^ d
+            state[i][1] = a ^ aes.xtimes(b) ^ aes.xtimes(c) ^ c ^ d
+            state[i][2] = a ^ b ^ aes.xtimes(c) ^ aes.xtimes(d) ^ d
+            state[i][3] = aes.xtimes(a) ^ a ^ b ^ c ^ aes.xtimes(d)
+            # [1 3 2 1]
+            # [1 2 3 1]
+            # [1 1 2 3]
+            # [3 1 1 2]
+    
+    # Multiply by 0x09 in GF(2^8)
+    def mul9(x):
+        return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ x
+
+    # Multiply by 0x0B in GF(2^8)
+    def mul11(x):
+        return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ aes.xtimes(x) ^ x
+
+    # Multiply by 0x0D in GF(2^8)
+    def mul13(x):
+        return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ aes.xtimes(aes.xtimes(x)) ^ x
+
+    # Multiply by 0x0E in GF(2^8)
+    def mul14(x):
+        return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ aes.xtimes(aes.xtimes(x)) ^ aes.xtimes(x)
+
+    # Perform Inverse MixColumn on a single column
+    def inv_mix_column(column):
+        a = column[0]
+        b = column[1]
+        c = column[2]
+        d = column[3]
+
+        return [
+            aes.mul14(a) ^ aes.mul11(b) ^ aes.mul13(c) ^ aes.mul9(d),
+            aes.mul9(a) ^ aes.mul14(b) ^ aes.mul11(c) ^ aes.mul13(d),
+            aes.mul13(a) ^ aes.mul9(b) ^ aes.mul14(c) ^ aes.mul11(d),
+            aes.mul11(a) ^ aes.mul13(b) ^ aes.mul9(c) ^ aes.mul14(d)
+        ]
+
+    # Apply Inverse MixColumn to the whole state
+    def inv_mix_columns(state):
+        for i in range(4):
+            # Extract column i
+            column = [state[j][i] for j in range(4)]
+            # Apply Inverse MixColumn to this column
+            column = aes.inv_mix_column(column)
+            # Put the result back into the state
+            for j in range(4):
+                state[j][i] = column[j]
+
+    def add_round_key(self, state, key) -> None:
+        for i in range(4):
+            for j in range(4):
+                state[i][j] ^= key[i][j]
 
 
     def main(self, plaintext) -> None:
@@ -79,9 +170,6 @@ class AES:
         # encrypt plaintext
         self.sub_bytes(stateplaintext.state)
         stateplaintext.print()
-
-
-
 
 
 # Run main
