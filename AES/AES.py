@@ -222,6 +222,13 @@ class AES:
         self.mix_columns(self.state)
         self.print()
 
+        # print round keys, TODO clearly not working
+        print("Round keys:")
+        for i in range(11):
+            print("Round ", i)
+            self.print()
+
+
 
 
 
