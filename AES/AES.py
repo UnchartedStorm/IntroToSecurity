@@ -10,8 +10,6 @@ class AES:
         # create keys for each round
         self.create_keys(key)
 
-
-
         # AES inverse S-box to be moved for inverse
         self.inv_s_box = [
             # 0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
@@ -36,7 +34,7 @@ class AES:
     def print(self) -> None:
         for i in range(4):
             for j in range(4):
-                print(hex(self.state[i][j]), end=' ')
+                print(hex(self.state[j][i]), end=' ')
             print()
 
         print()
@@ -108,16 +106,19 @@ class AES:
                 state[i][j] = aes.inv_s_box[state[i][j]]
 
     def shift_rows(self, state) -> None:
+        # transpose state
+        # state = state.T
+
+        # this shifts the rows
         for i in range(4):
-            state[i] = np.roll(state[i], -i)
+            state[:,i] = np.roll(state[:,i], -i)
 
-        # return state
-
+        # transpose state back
+        # state = state.T
 
     def inv_shift_rows(self, state) -> None:
         for i in range(4):
             state[i] = state[i][-i:] + state[i][:-i]
-
 
     # multiplying by 2 in GF(2^8)
     # used in mix_columns
@@ -198,19 +199,30 @@ class AES:
         print("Key: ", key)
 
         # print state
+        print("Starting state:")
+        self.print()
+
+        # xor with key for round 0
+        print("Add round key:")
+        self.add_round_key(self.state, self.key)
         self.print()
 
         # encrypt plaintext
+        print("Encrypting plaintext:")
         self.sub_bytes(self.state)
         self.print()
 
         # shift rows
+        print("Shift rows:")
         self.shift_rows(self.state)
         self.print()
 
         # mix columns
+        print("Mix columns:")
         self.mix_columns(self.state)
         self.print()
+
+
 
 
 # Run main
@@ -219,6 +231,8 @@ if __name__ == "__main__":
     plaintext = input("Enter plaintext: ")
     key = input("Enter key: ")
 
+    # example use cases, just press enter to use.
+    # https://www.simplilearn.com/tutorials/cryptography-tutorial/aes-encryption
     if plaintext == "":
         plaintext = "Two One Nine Two"
 
