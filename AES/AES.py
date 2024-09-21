@@ -1,23 +1,25 @@
 import random
 import numpy as np
 
-class State:
-    def __init__(self, plaintext) -> None:
-        if plaintext:
-            self.state = [[plaintext[i + j] for j in range(4)] for i in range(0, 16, 4)]
-        else:
-            self.state = [[0 for _ in range(4)] for _ in range(4)]
-
-
-    def print(self) -> None:
-        for i in range(4):
-            for j in range(4):
-                print(hex(self.state[j][i]), end=' ')
-            print()
 
 class AES:
-    def __init__(self) -> None:
-        # s_box is simply an affine transformation(i.e. matrix mulitplication followed by a vector addition) 
+    def __init__(self, plaintext) -> None:
+        # convert plaintext to bytes
+        plaintext_bytes = plaintext.encode('utf-8')
+
+        # make sure plaintext is smaller than 128 bits
+        if len(plaintext_bytes) > 16:
+            print("Plaintext is too large. Must be 128 bits or smaller.")
+            exit()
+
+        # make plaintext 128 bits
+        while len(plaintext_bytes) < 16:
+            plaintext_bytes += b'\0'
+
+        # create state
+        self.create_state(plaintext_bytes)
+
+        # s_box is simply an affine transformation(i.e. matrix mulitplication followed by a vector addition)
         # of the inverse of the input byte. Possible to do that instead of using a lookup table.
 
         # AES S-box
@@ -62,7 +64,28 @@ class AES:
             0x17,0x2b,0x04,0x7e,0xba,0x77,0xd6,0x26,0xe1,0x69,0x14,0x63,0x55,0x21,0x0c,0x7d  # F
         ]
 
-    
+    def print(self) -> None:
+        for i in range(4):
+            for j in range(4):
+                print(hex(self.state[i][j]), end=' ')
+            print()
+
+        print()
+
+    def create_state(self, plaintext) -> None:
+        # if plaintext:
+        #     self.state = [[plaintext[i + j] for j in range(4)] for i in range(0, 16, 4)]
+        # else:
+        #     self.state = [[0 for _ in range(4)] for _ in range(4)]
+
+        if plaintext:
+            # create numpy matrix
+            self.state = np.array([[plaintext[i + j] for j in range(4)] for i in range(0, 16, 4)])
+        else:
+            self.state = np.array([[0 for _ in range(4)] for _ in range(4)])
+
+
+
     def sub_bytes(self, state) -> None:
         for i in range(4):
             for j in range(4):
@@ -75,13 +98,16 @@ class AES:
 
     def shift_rows(self, state) -> None:
         for i in range(4):
-            state[i] = state[i][i:] + state[i][:i]
+            state[i] = np.roll(state[i], -i)
+
+        # return state
+
 
     def inv_shift_rows(self, state) -> None:
         for i in range(4):
             state[i] = state[i][-i:] + state[i][:-i]
 
-    
+
     # multiplying by 2 in GF(2^8)
     # used in mix_columns
     def xtimes(x):
@@ -90,8 +116,8 @@ class AES:
             return ((x << 1) ^ 0x11B)
             # (x << 1) ^ 0x1B) & 0xFF also does the same thing
         return x << 1
-        
-    
+
+
     def mix_columns(self, state) -> None:
         for i in range(4):
             a = state[i][0]
@@ -107,7 +133,7 @@ class AES:
             # [1 2 3 1]
             # [1 1 2 3]
             # [3 1 1 2]
-    
+
     # Multiply by 0x09 in GF(2^8)
     def mul9(x):
         return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ x
@@ -155,21 +181,21 @@ class AES:
                 state[i][j] ^= key[i][j]
 
 
-    def main(self, plaintext) -> None:
+    def main(self) -> None:
         # generate 128-bit key in bytes
         key = random.getrandbits(128).to_bytes(16, 'big')
         print("Key: ", key)
 
-        # make plaintext 128 bits
-        if len(plaintext) < 16:
-            plaintext += b'\x00' * (16 - len(plaintext))
-
-        stateplaintext = State(plaintext)
-        stateplaintext.print()
+        # print state
+        self.print()
 
         # encrypt plaintext
-        self.sub_bytes(stateplaintext.state)
-        stateplaintext.print()
+        self.sub_bytes(self.state)
+        self.print()
+
+        # shift rows
+        self.shift_rows(self.state)
+        self.print()
 
 
 # Run main
@@ -177,16 +203,10 @@ if __name__ == "__main__":
     # prompt user for plaintext
     plaintext = input("Enter plaintext: ")
 
-    # convert plaintext to bytes
-    plaintext_bytes = plaintext.encode('utf-8')
-
-    # make sure plaintext is smaller than 128 bits
-    if len(plaintext_bytes) > 16:
-        print("Plaintext is too large. Must be 128 bits or smaller.")
-        exit()
+    if plaintext == "":
+        plaintext = "0123456789abcdef"
 
     print("Plaintext: ", plaintext)
-    print("Plaintext binary: ", plaintext_bytes)
 
-    aes = AES()
-    aes.main(plaintext_bytes)
+    aes = AES(plaintext)
+    aes.main()
