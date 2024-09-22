@@ -72,6 +72,15 @@ class AES:
             # xor with previous key
             self.round_keys[i + 1] ^= self.round_keys[i]
 
+    def print_keys(self) -> None:
+        for i in range(11):
+            print(f"Round {i} key")
+            for j in range(4):
+                for k in range(4):
+                    print(hex(self.round_keys[i][k][j]), end=' ')
+                print()
+            print()
+    
     def sub_bytes(self, state) -> None:
         # AES S-box
         # s_box is simply an affine transformation(i.e. matrix mulitplication followed by a vector addition)
@@ -224,9 +233,7 @@ class AES:
 
         # print round keys, TODO clearly not working
         print("Round keys:")
-        for i in range(11):
-            print("Round ", i)
-            self.print()
+        self.print_keys()
 
 
 
