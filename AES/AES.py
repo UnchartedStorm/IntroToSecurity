@@ -215,8 +215,7 @@ class AES:
     def add_round_key(self, state, key, round) -> None:
         for i in range(4):
             for j in range(4):
-                # state is transposed while key isn't
-                state[i][j] ^= self.key[round][j][i]
+                state[i][j] ^= self.key[round][i][j]
 
 
     def main(self) -> None:
