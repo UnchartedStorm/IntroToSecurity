@@ -70,7 +70,7 @@ class AES:
             print(f"Round {i} key")
             for j in range(4):
                 for k in range(4):
-                    print(hex(self.key[i][j][k]), end=' ')
+                    print(hex(self.key[i][k][j]), end=' ')
                 print()
             print()
 
@@ -121,8 +121,8 @@ class AES:
 
         # transpose keys, using this for now since I am not sure how to fix this
         # in the original code you wrote.
-        for i in range(self.Nr + 1):
-            self.key[i] = self.key[i].T
+        # for i in range(self.Nr + 1):
+        #     self.key[i] = self.key[i]
 
 
     def sub_bytes(self, state) -> None:
@@ -217,10 +217,35 @@ class AES:
             for j in range(4):
                 state[j][i] = column[j]
 
-    def add_round_key(self, state, key, round) -> None:
+    def add_round_key(self, state, round) -> None:
+        # # print the round key
+        # print(f"Round {round} key:")
+
+        # for i in range(4):
+        #     for j in range(4):
+        #         print(hex(self.key[round][i][j]), end=' ')
+        #     print()
+
+        # # print state
+        # print("State:")
+        # self.print()
+
+
+        # xor hex values
         for i in range(4):
             for j in range(4):
-                state[i][j] ^= self.key[round][i][j]
+
+                # print(f"State[{i}][{j}] = {state[i][j]} hex: {hex(state[i][j])}")
+                # print(f"Key[{round}][{i}][{j}] = {self.key[round][i][j]} hex: {hex(self.key[round][i][j])}")
+
+                # a = hex(state[i][j])
+                # b = hex(self.key[round][i][j])
+
+                # xor = int(a, 16) ^ int(b, 16)
+                # print(f"XOR: {hex(xor)}")
+
+                state[i][j] = state[i][j] ^ self.key[round][i][j]
+
 
 
     def main(self) -> None:
@@ -230,28 +255,57 @@ class AES:
 
         # xor with key for round 0
         print("Add round key:")
-        self.add_round_key(self.state, self.key, 0)
+        self.add_round_key(self.state, 0)
         self.print()
 
-        # encrypt plaintext
-        print("Encrypting plaintext:")
+        # # encrypt plaintext
+        # print("Encrypting plaintext:")
+        # self.sub_bytes(self.state)
+        # self.print()
+
+        # # shift rows
+        # print("Shift rows:")
+        # self.shift_rows(self.state)
+        # self.print()
+
+        # # mix columns
+        # print("Mix columns:")
+        # self.mix_columns(self.state)
+        # self.print()
+
+        # # print round keys
+        # print("Round keys:")
+        # self.print_keys()
+
+        for i in range(1, 10):
+
+            print("Sub bytes:")
+            self.sub_bytes(self.state)
+            self.print()
+
+            print("Shift rows:")
+            self.shift_rows(self.state)
+            self.print()
+
+            print("Mix columns:")
+            self.mix_columns(self.state)
+            self.print()
+
+            print(f"Round {i}")
+            self.add_round_key(self.state, i)
+            self.print()
+
+        print("Sub bytes:")
         self.sub_bytes(self.state)
         self.print()
 
-        # shift rows
         print("Shift rows:")
         self.shift_rows(self.state)
         self.print()
 
-        # mix columns
-        print("Mix columns:")
-        self.mix_columns(self.state)
+        print("Add round key:")
+        self.add_round_key(self.state, 10)
         self.print()
-
-        # print round keys
-        print("Round keys:")
-        self.print_keys()
-
 
 
 # Run main
