@@ -74,7 +74,6 @@ class AES:
                 print()
             print()
 
-    # why did you transpose the matrices?
     def create_state(self, plaintext) -> None:
         if plaintext:
             # create numpy matrix
@@ -136,15 +135,9 @@ class AES:
                 state[i][j] = AES.inv_s_box[state[i][j]]
 
     def shift_rows(self, state) -> None:
-        # transpose state
-        # state = state.T
-
-        # this shifts the rows
+        # this shifts the rows by i
         for i in range(4):
             state[:,i] = np.roll(state[:,i], -i)
-
-        # transpose state back
-        # state = state.T
 
     def inv_shift_rows(self, state) -> None:
         for i in range(4):
@@ -218,94 +211,64 @@ class AES:
                 state[j][i] = column[j]
 
     def add_round_key(self, state, round) -> None:
-        # # print the round key
-        # print(f"Round {round} key:")
-
-        # for i in range(4):
-        #     for j in range(4):
-        #         print(hex(self.key[round][i][j]), end=' ')
-        #     print()
-
-        # # print state
-        # print("State:")
-        # self.print()
-
-
         # xor hex values
         for i in range(4):
             for j in range(4):
+                state[i][j] ^= self.key[round][i][j]
 
-                # print(f"State[{i}][{j}] = {state[i][j]} hex: {hex(state[i][j])}")
-                # print(f"Key[{round}][{i}][{j}] = {self.key[round][i][j]} hex: {hex(self.key[round][i][j])}")
+    def state_to_text(self, state) -> str:
+        # concatenate state
+        text = ""
+        for i in range(4):
+            for j in range(4):
+                # add hex value to text without the 0x
+                text += hex(state[i][j])[2:]
 
-                # a = hex(state[i][j])
-                # b = hex(self.key[round][i][j])
-
-                # xor = int(a, 16) ^ int(b, 16)
-                # print(f"XOR: {hex(xor)}")
-
-                state[i][j] = state[i][j] ^ self.key[round][i][j]
-
-
+        return text
 
     def main(self) -> None:
-        # print state
-        print("Starting state:")
-        self.print()
+        # print("Starting state:")
+        # self.print()
 
         # xor with key for round 0
-        print("Add round key:")
+        # print("Add round 0 key:")
         self.add_round_key(self.state, 0)
-        self.print()
-
-        # # encrypt plaintext
-        # print("Encrypting plaintext:")
-        # self.sub_bytes(self.state)
         # self.print()
-
-        # # shift rows
-        # print("Shift rows:")
-        # self.shift_rows(self.state)
-        # self.print()
-
-        # # mix columns
-        # print("Mix columns:")
-        # self.mix_columns(self.state)
-        # self.print()
-
-        # # print round keys
-        # print("Round keys:")
-        # self.print_keys()
 
         for i in range(1, 10):
+            # print("---------")
 
-            print("Sub bytes:")
+            # print("Sub bytes:")
             self.sub_bytes(self.state)
-            self.print()
+            # self.print()
 
-            print("Shift rows:")
+            # print("Shift rows:")
             self.shift_rows(self.state)
-            self.print()
+            # self.print()
 
-            print("Mix columns:")
+            # print("Mix columns:")
             self.mix_columns(self.state)
-            self.print()
+            # self.print()
 
-            print(f"Round {i}")
+            # print(f"Round {i}")
             self.add_round_key(self.state, i)
-            self.print()
+            # self.print()
 
-        print("Sub bytes:")
+        # print("Sub bytes:")
         self.sub_bytes(self.state)
-        self.print()
+        # self.print()
 
-        print("Shift rows:")
+        # print("Shift rows:")
         self.shift_rows(self.state)
-        self.print()
+        # self.print()
 
-        print("Add round key:")
+        # print("Add round key:")
         self.add_round_key(self.state, 10)
-        self.print()
+        # self.print()
+
+        print("Cipher text:")
+        print(self.state_to_text(self.state))
+
 
 
 # Run main
@@ -326,29 +289,27 @@ if __name__ == "__main__":
     print("Key: ", key)
 
     # convert plaintext and key to bytes
-    plaintext_bytes = plaintext.encode('utf-8')
+    text_bytes = plaintext.encode('utf-8')
     key_bytes = key.encode('utf-8')
 
-    # make sure plaintext is smaller than 128 bits
-    if len(plaintext_bytes) > 16:
-        print("Plaintext is too large. Must be 128 bits or smaller.")
-        exit()
+    text_array = []
+
+    while (len(text_bytes) > 16):
+        text_array.append(text_bytes[:16])
+        text_bytes = text_bytes[16:]
+
+    if len(text_bytes) <= 16:
+        while len(text_bytes) < 16:
+            text_bytes += b'\0'
+
+        text_array.append(text_bytes)
+
 
     if len(key_bytes) != 16:
-        print("Key must be 128 bits.")
+        print("Key must be 128 bits / 16 bytes")
         exit()
 
-    # make plaintext 128 bits
-    while len(plaintext_bytes) < 16:
-        plaintext_bytes += b'\0'
 
-    # make key 128 bits
-    while len(key_bytes) < 16:
-        # repeat key until 128 bits
-        key_bytes += key_bytes
-
-    # cut off key if it is larger than 128 bits
-    key_bytes = key_bytes[:16]
-
-    aes = AES(plaintext_bytes, key_bytes)
-    aes.main()
+    for text in text_array:
+        aes = AES(text, key_bytes)
+        aes.main()
