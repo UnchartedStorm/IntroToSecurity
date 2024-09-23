@@ -82,7 +82,7 @@ class AES:
         else:
             self.state = np.array([[0 for _ in range(4)] for _ in range(4)])
 
-    
+
     # The next 3 functions are used for key creation.
     def sub_word(self, word) -> None:
         for i in range(len(word)):
@@ -92,11 +92,11 @@ class AES:
     def rot_word(self, word) -> None:
         word = np.roll(word, -1)
         return word
-    
+
     def create_keys(self, key) -> None:
         # Create a numpy matrix from the 16-byte key, not tranposed
         # self.key = [np.array([[key[4*i + j] for j in range(4)] for i in range(4)], dtype=np.uint8)]
-        self.key = np.zeros((self.Nr + 1, 4, 4), dtype=np.int)
+        self.key = np.zeros((self.Nr + 1, 4, 4), dtype=int)
 
         # rcon array
         rcon = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
@@ -118,8 +118,13 @@ class AES:
                     prev = self.key[i][j - 1]
                 for k in range(4):
                     self.key[i][j][k] = self.key[i - 1][j][k] ^ prev[k]
-            
-    
+
+        # transpose keys, using this for now since I am not sure how to fix this
+        # in the original code you wrote.
+        for i in range(self.Nr + 1):
+            self.key[i] = self.key[i].T
+
+
     def sub_bytes(self, state) -> None:
         for i in range(4):
             for j in range(4):
@@ -219,11 +224,6 @@ class AES:
 
 
     def main(self) -> None:
-        # why is this part here?
-        # generate 128-bit key in bytes
-        # key = random.getrandbits(128).to_bytes(16, 'big')
-        # print("Key: ", key)
-
         # print state
         print("Starting state:")
         self.print()
@@ -248,11 +248,9 @@ class AES:
         self.mix_columns(self.state)
         self.print()
 
-        # print round keys, TODO clearly not working
+        # print round keys
         print("Round keys:")
         self.print_keys()
-
-
 
 
 
