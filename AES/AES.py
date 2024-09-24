@@ -7,6 +7,9 @@ The prompts can be left blank to run the example use case:
 Which should output the following ciphertext:
     29c3505f571420f6402299b31a02d73a
 
+The key should be 128 bits / 16 bytes long.
+The plaintext can be any length, but will be padded with null bytes to 16 bytes.
+
 Group: ¯\_(ツ)_/¯
 Bruno Sprenger  StudentID: 13084151
 Ray Zhang       StudentID: 15772829
@@ -15,7 +18,7 @@ Ray Zhang       StudentID: 15772829
 import numpy as np
 
 class AES:
-    # AES S-box
+    # AES Rijndael S-box.
     # s_box is simply an affine transformation(i.e. matrix mulitplication followed by a vector addition)
     # of the inverse of the input byte. Possible to do that instead of using a lookup table.
     s_box = [
@@ -39,17 +42,18 @@ class AES:
     ]
 
     def __init__(self, plaintext, key) -> None:
-        # number of rounds
+        # The number of rounds.
         self.Nr = 10
-        # number of columns in state(or words in key)
+        # The number of columns in state(or words in key).
         self.Nk = 4
-        # create state
+        # Create state
         self.create_state(plaintext)
 
-        # create keys for each round, requires the s_box
+        # Create keys for each round, requires the s_box.
         self.create_keys(key)
 
     def print(self) -> None:
+        # This function is used for debugging purposes and prints the state.
         for i in range(4):
             for j in range(4):
                 print(hex(self.state[j][i]), end=' ')
@@ -58,6 +62,7 @@ class AES:
         print()
 
     def print_keys(self) -> None:
+        # This function is used for debugging purposes and prints the keys.
         for i in range(11):
             print(f"Round {i} key")
             for j in range(4):
@@ -67,36 +72,37 @@ class AES:
             print()
 
     def create_state(self, plaintext) -> None:
+        # This creates the state from the plaintext.
         if plaintext:
-            # create numpy matrix
             self.state = np.array([[plaintext[i + j] for j in range(4)] for i in range(0, 16, 4)])
         else:
             self.state = np.array([[0 for _ in range(4)] for _ in range(4)])
 
     # The next 3 functions are used for key creation.
     def sub_word(self, word):
+        # This function substitutes each byte in the word with the corresponding byte in the s_box.
         for i in range(len(word)):
             word[i] = AES.s_box[word[i]]
         return word
 
     def rot_word(self, word):
+        # This function rotates the word by one byte.
         word = np.roll(word, -1)
         return word
 
     def create_keys(self, key) -> None:
-        # Create a numpy matrix from the 16-byte key, not tranposed
-        # self.key = [np.array([[key[4*i + j] for j in range(4)] for i in range(4)], dtype=np.uint8)]
+        # This function creates an array of keys for each round.
         self.key = np.zeros((self.Nr + 1, 4, 4), dtype=int)
 
-        # rcon array
+        # Rcon array.
         rcon = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
 
-        # intialize with given key
+        # Initialize with given key.
         for i in range(4):
             for j in range(4):
                 self.key[0][i][j] = key[4*i + j]
 
-        # generate round keys
+        # Generate round keys.
         for i in range(1, self.Nr + 1):
             for j in range(4):
                 if j == 0:
@@ -110,25 +116,26 @@ class AES:
                     self.key[i][j][k] = self.key[i - 1][j][k] ^ prev[k]
 
     def sub_bytes(self, state) -> None:
+        # This substitutes each byte in the state with the corresponding byte in the s_box.
         for i in range(4):
             for j in range(4):
                 state[i][j] = AES.s_box[state[i][j]]
 
     def shift_rows(self, state) -> None:
-        # this shifts the rows by i
+        # This shifts the rows in the state by i positions.
         for i in range(4):
             state[:, i] = np.roll(state[:, i], -i)
 
-    # multiplying by 2 in GF(2^8)
-    # used in mix_columns
+    # Multiplying by 2 in GF(2^8).
     def xtimes(self, x):
-        # if MSB is 1, then it will overflow
+        # If MSB is 1, then it will overflow.
         if x & 0x80:
             return ((x << 1) ^ 0x11B)
-            # (x << 1) ^ 0x1B) & 0xFF also does the same thing
+            # (x << 1) ^ 0x1B) & 0xFF also does the same thing.
         return x << 1
 
     def mix_columns(self, state) -> None:
+        # This mixes the columns in the state.
         for i in range(4):
             a = state[i][0]
             b = state[i][1]
@@ -144,43 +151,41 @@ class AES:
             # [1 1 2 3]
             # [3 1 1 2]
 
-    # Multiply by 0x09 in GF(2^8)
+    # Multiply by 0x09 in GF(2^8).
     def mul9(x):
         return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ x
 
-    # Multiply by 0x0B in GF(2^8)
+    # Multiply by 0x0B in GF(2^8).
     def mul11(x):
         return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ aes.xtimes(x) ^ x
 
-    # Multiply by 0x0D in GF(2^8)
+    # Multiply by 0x0D in GF(2^8).
     def mul13(x):
         return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ aes.xtimes(aes.xtimes(x)) ^ x
 
-    # Multiply by 0x0E in GF(2^8)
+    # Multiply by 0x0E in GF(2^8).
     def mul14(x):
         return aes.xtimes(aes.xtimes(aes.xtimes(x))) ^ aes.xtimes(aes.xtimes(x)) ^ aes.xtimes(x)
 
     def add_round_key(self, state, round) -> None:
-        # xor hex values
+        # xor hex values.
         for i in range(4):
             for j in range(4):
                 state[i][j] ^= self.key[round][i][j]
 
     def state_to_text(self, state) -> str:
-        # concatenate state
+        # Concatenate state.
         text = ""
         for i in range(4):
             for j in range(4):
-                # add hex value to text without the 0x
+                # Add hex value to text by slicing off the '0x' prefix.
                 text += hex(state[i][j])[2:]
 
         return text
 
-    def main(self) -> None:
-        # print("Starting state:")
-        # self.print()
+    def encrypt(self) -> None:
+        # All print statements are commented out, but can be uncommented for debugging purposes.
 
-        # xor with key for round 0
         # print("Add round 0 key:")
         self.add_round_key(self.state, 0)
         # self.print()
@@ -221,12 +226,11 @@ class AES:
 
 
 if __name__ == "__main__":
-    # prompt user for plaintext
+    # Prompt user for plaintext and key.
     plaintext = input("Enter plaintext: ")
     key = input("Enter key: ")
 
-    # example use cases, just press enter to use.
-    # https://www.simplilearn.com/tutorials/cryptography-tutorial/aes-encryption
+    # Example use case, if no input is given.
     if plaintext == "":
         plaintext = "Two One Nine Two"
 
@@ -236,10 +240,11 @@ if __name__ == "__main__":
     print("Plaintext: ", plaintext)
     print("Key: ", key)
 
-    # convert plaintext and key to bytes
+    # Convert plaintext and key to bytes
     text_bytes = plaintext.encode('utf-8')
     key_bytes = key.encode('utf-8')
 
+    # Pad text with null bytes if it is less than 16 bytes
     if len(text_bytes) <= 16:
         while len(text_bytes) < 16:
             text_bytes += b'\0'
@@ -248,5 +253,9 @@ if __name__ == "__main__":
         print("Key must be 128 bits / 16 bytes")
         exit()
 
+    if len(text_bytes) != 16:
+        print("Plaintext must be 128 bits / 16 bytes")
+        exit()
+
     aes = AES(text_bytes, key_bytes)
-    aes.main()
+    aes.encrypt()
