@@ -1,6 +1,19 @@
+"""
+This file is an implementation of the AES encryption algorithm.
+The algorithm can be run by simply running the file and following the prompts.
+The prompts can be left blank to run the example use case:
+    Plaintext: Two One Nine Two
+    Key: Thats my Kung Fu
+Which should output the following ciphertext:
+    29c3505f571420f6402299b31a02d73a
+
+Group: ¯\_(ツ)_/¯
+Bruno Sprenger  StudentID: 13084151
+Ray Zhang       StudentID: 15772829
+"""
+
 import random
 import numpy as np
-
 
 class AES:
     # AES S-box
@@ -292,24 +305,13 @@ if __name__ == "__main__":
     text_bytes = plaintext.encode('utf-8')
     key_bytes = key.encode('utf-8')
 
-    text_array = []
-
-    while (len(text_bytes) > 16):
-        text_array.append(text_bytes[:16])
-        text_bytes = text_bytes[16:]
-
     if len(text_bytes) <= 16:
         while len(text_bytes) < 16:
             text_bytes += b'\0'
-
-        text_array.append(text_bytes)
-
 
     if len(key_bytes) != 16:
         print("Key must be 128 bits / 16 bytes")
         exit()
 
-
-    for text in text_array:
-        aes = AES(text, key_bytes)
-        aes.main()
+    aes = AES(text_bytes, key_bytes)
+    aes.main()
