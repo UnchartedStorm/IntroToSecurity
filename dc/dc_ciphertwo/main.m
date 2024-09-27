@@ -12,46 +12,46 @@ key_counter = zeros(1, 16);
 
 % for all plaintext pairs
 for i=1:no_pairs
-    
+
     % compute the respective ciphertext pairs
     c0 = cipher_two(m0(i));
     c1 = cipher_two(m1(i));
-    
-    % delta_m = m0 xor m1 = delta_u = u0 xor u1 
+
+    % delta_m = m0 xor m1 = delta_u = u0 xor u1
     % we also know that delta_m = 0xf (since m is chosen that way)
     delta_m = 15;
     delta_u = delta_m;
-    
-    % from the difference distribution of the sbox we also know that when 
+
+    % from the difference distribution of the sbox we also know that when
     % delta_u=0xf, then delta_v is likely to be 0xd (with probability
     % 10/16)
-    
+
     % for all key guesses of key k2
     for key_guess = 0:15
-       
+
         % invert the 3rd addroundkey
         x0 = bitxor(key_guess, c0);
         x1 = bitxor(key_guess, c1);
-        
+
         % invert the sbox
         w0 = inv_sbox(x0);
         w1 = inv_sbox(x1);
-        
+
         % compute the differential delta_w
         delta_w = bitxor(w0, w1);
-        
-        % we know that delta_w is equal to delta_v 
+
+        % we know that delta_w is equal to delta_v
         delta_v = delta_w;
-        
+
         % check if delta_v is equal to the highly likely difference 0xd and
         % if so increase the key guess counter
         if delta_v == 13
             key_counter(key_guess+1) = key_counter(key_guess+1) + 1;
         end
-    
+
     end
 
-    
+
 end
 
 
