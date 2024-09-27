@@ -8,7 +8,7 @@ close all;
 % Note that a nibble is a 4-bit value
 % Ensure that the difference between every plaintext pair (m0,m1) is 
 % equal to (0 0 2 0)
-no_pairs = 3000;
+no_pairs = 7000;
 na = randi(16, no_pairs, 1) - 1;
 nb = randi(16, no_pairs, 1) - 1;
 nc = randi(16, no_pairs, 1) - 1;
@@ -23,8 +23,8 @@ for i=1:no_pairs
     
     % compute the respective ciphertext pairs using the cipher_four()
     % implementation
-    c0 = cipher_four([na(i), nb(i), nc(i), nd(i)]);
-    c1 = cipher_four([na(i), nb(i), ncd(i), nd(i)]);
+    c0 = cipher_four([na, nb, nc, nd]);
+    c1 = cipher_four([na, nb, ncd, nd]);
     
     % apply filtering to the ciphertext pairs i.e. 
     % -compute the difference between the ciphertext pairs
@@ -39,7 +39,7 @@ for i=1:no_pairs
 
     % -if the ciphertext pair passes the filter's check, we keep it
     % otherwise, we discard it
-    if check_1 | check_2 | check_3 | check_4
+    if checl_1 | check_2 | check_3 | check_4
         stored_c0(end + 1) = c0;
         stored_c0(end + 1) = c1;
     end
@@ -73,21 +73,16 @@ for i=1:length(stored_c0)
         % compare the delta with the difference (0 0 2 0)
         % if they are equal then increment the the respective key counter
         % by one
-        if delta_q == [0, 0, 2, 0]
-            key_counter(key_guess + 1) = key_counter(key_guess + 1) + 1;
-        end
+
     end
 end
 
-% find which key guess has the largest counter
-[max_val, max_index] = max(key_counter);
-k6_recovered = max_index - 1;
+% find which key guess has the largest counter 
 
 % print and store the recovered key nibble
 % you can also confirm by comparing it to the correct key nibble in
 % cipher_four()
-k6_recovered == 12;
 
 % visualize with a bar plot the counters for the k6 key guesses
-bar(0:15, key_counter);
+
 
