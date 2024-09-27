@@ -39,9 +39,12 @@ for i=1:no_pairs
 
     % -if the ciphertext pair passes the filter's check, we keep it
     % otherwise, we discard it
+    disp(c0)
     if check_1 | check_2 | check_3 | check_4
         stored_c0(end + 1) = c0;
-        stored_c0(end + 1) = c1;
+        stored_c1(end + 1) = c1;
+        % stored_c0(end + 1, :) = c0;  % Add c0 as a new row in stored_c0
+        % stored_c1(end + 1, :) = c1;  % Add c1 as a new row in stored_c1
     end
     
 % end
@@ -86,7 +89,9 @@ k6_recovered = max_index - 1;
 % print and store the recovered key nibble
 % you can also confirm by comparing it to the correct key nibble in
 % cipher_four()
-k6_recovered == 12;
+x = (k6_recovered == 12);
+disp('x:')
+disp(x)
 
 % visualize with a bar plot the counters for the k6 key guesses
 bar(0:15, key_counter);

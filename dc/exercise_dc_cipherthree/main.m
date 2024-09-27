@@ -63,6 +63,8 @@ end
 [max_val, max_index] = max(key_counter);
 k3_recovered = max_index - 1;
 % compare it to the true k3 key specified in cipher_three()
-k3_recovered == 7;
+x = (k3_recovered == 7);
+disp('x:')
+disp(x)
 % visualize with a bar plot the counters for the k3 key guesses
 bar(0:15, key_counter);

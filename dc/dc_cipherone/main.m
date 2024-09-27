@@ -57,7 +57,9 @@ end
 
 % the resulting key is stored in key recovered
 % compare it to the true key k1=7
-k1_recovered == 7;
+x = (k1_recovered == 7);
+disp('x:')
+disp(x)
 
 % using the recovered k1 we can also recover k0
 k0_recovered = bitxor(inv_sbox(bitxor(c0(1), k1_recovered)), m0(1));
