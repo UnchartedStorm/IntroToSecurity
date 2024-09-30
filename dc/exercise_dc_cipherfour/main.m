@@ -17,6 +17,7 @@ ncd = bitxor(nc, 2);
 
 stored_c0 = [];
 stored_c1 = [];
+size = 0;
 
 % for all generated plaintext pairs 
 for i=1:no_pairs
@@ -39,16 +40,16 @@ for i=1:no_pairs
 
     % -if the ciphertext pair passes the filter's check, we keep it
     % otherwise, we discard it
-    disp(c0)
     if check_1 | check_2 | check_3 | check_4
-        stored_c0(end + 1) = c0;
-        stored_c1(end + 1) = c1;
-        % stored_c0(end + 1, :) = c0;  % Add c0 as a new row in stored_c0
-        % stored_c1(end + 1, :) = c1;  % Add c1 as a new row in stored_c1
+        stored_c0 = [stored_c0; c0];  % Append c0 as a row
+        stored_c1 = [stored_c1; c1];  % Append c1 as a row
+        size = size + 1;
     end
     
 % end
 end
+
+disp(size)
 
 % focus on the 3rd nibble of the ciphertext pairs that were kept after
 % filtering
@@ -83,6 +84,7 @@ for i=1:length(stored_c0)
 end
 
 % find which key guess has the largest counter
+disp(key_counter)
 [max_val, max_index] = max(key_counter);
 k6_recovered = max_index - 1;
 
