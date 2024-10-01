@@ -41,10 +41,8 @@ for i=1:no_pairs
     % -if the ciphertext pair passes the filter's check, we keep it
     % otherwise, we discard it
     if check_1 | check_2 | check_3 | check_4
-        % stored_c0 = [stored_c0; c0];  % Append c0 as a row
-        % stored_c1 = [stored_c1; c1];  % Append c1 as a row
-        stored_c0{end + 1} = c0;
-        stored_c1{end + 1} = c1;
+        stored_c0 = [stored_c0; c0];  % Append c0 as a row
+        stored_c1 = [stored_c1; c1];  % Append c1 as a row
         size = size + 1;
     end
     
@@ -66,10 +64,11 @@ for i=1:length(stored_c0)
     % for all key guesses of the 3rd nible of roundkey k6 
     for key_guess = 0:15
     
-       
         % invert the 6th addkey operation
-        x0 = bitxor(key_guess, stored_c0{i});
-        x1 = bitxor(key_guess, stored_c1{i});
+        x0 = bitxor(key_guess, stored_c0(i));
+        x1 = bitxor(key_guess, stored_c1(i));
+        fprintf("x0: %g", x0)
+        fprintf("x1: %g\n", x1)
 
         % invert the sbox
         q0 = inv_sbox(x0);
@@ -77,6 +76,7 @@ for i=1:length(stored_c0)
         
         % compute the difference delta
         delta_q = bitxor(q0, q1);
+        fprintf("round %g: %g\n", i, delta_q)
 
         % compare the delta with the difference (0 0 2 0)
         % if they are equal then increment the the respective key counter
