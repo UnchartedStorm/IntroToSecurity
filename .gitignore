@@ -1,5 +1,5 @@
-# ignore /dfa/in.mat
-/dfa/in.mat
+# ignore /cpa/in.mat
+/cpa/in.mat
 
-# ignore /dfa/traces.mat
-/dfa/traces.mat
+# ignore /cpa/traces.mat
+/cpa/traces.mat
