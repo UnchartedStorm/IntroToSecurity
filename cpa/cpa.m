@@ -49,7 +49,7 @@ format longG
 
 % sorts according to first col, which is the corr
 sorted = sortrows(to_sort, 'descend');
-% disp(sorted(1:100, :));
+disp(sorted(1:100, :));
 
 % evaluate the largest value for each key
 max_to_sort = zeros(m, 2);
@@ -71,14 +71,66 @@ disp("max_val")
 disp(max_val)
 
 % Create the following graph: For every time sample, plot the absolute correlation value for every k
-% candidate. Highlight the top candidate (e.g. using a different color). A similar graph is provided
-% in the book "Power Analysis Attacks by S. Mangard et al.", page 126, figure 6.3.
+% candidate. Highlight the top candidate (e.g. using a different color).
+
+candidate = 7;
+
+% UNCOMMENT THE PLOT LINES
+x = 1:p;
+figure;
+hold on; 
+for i = 1:m
+    if i ~= candidate 
+        % plot(x, rho(i,:), 'Color', [0.7, 0.7, 0.7], 'LineStyle', '-'); 
+    end
+end
+
+% plot(x, rho(candidate,:), 'r-');  % Red line
+
+
 
 % Create the following graph: Run the attack with 500, 1k, 2k 4k, 8k and 12k power traces and for
 % every attack(i.e. every number of traces), rank the candidates from best to worst 
 % (based on the absolute correlation value).
 % Focus on the correct candidate, i.e. the one you recovered previously using 14900 traces. Plot
 % the correct candidate’s ranking (e.g. 1st, 2nd etc.) for all these attacks.
+
+num_to_try = [500, 1000, 2000, 4000, 8000, 12000];
+pos = 1:6;
+
+for i=1:length(num_to_try)
+    n1 = num_to_try(i);
+    % random select n1 rows from 1 to n
+    traces_selected = randperm(n, n1);
+    pred_new = pred(traces_selected, :);
+    traces_new = traces(traces_selected, :);
+    rho_new = corr(pred_new, traces_new);
+    % disp(rho_new)
+    to_sort_new = zeros(m, 2);
+    for j=1:m
+        to_sort_new(j, 1) = j;
+        for k=1:p
+            x = abs(rho_new(j, k));
+            if (x > to_sort_new(j, 2))
+                to_sort_new(j, 2) = x;
+            end 
+        end 
+    end
+    max_val_new = sortrows(to_sort_new, 2, 'descend');
+    % disp(n1)
+    % disp('')
+    % disp(max_val_new)
+    for j=1:m
+        if max_val_new(j, 1) == candidate
+            pos(i) = j;
+            break
+        end
+    end 
+end
+
+disp(pos)
+% Plot the data
+plot(num_to_try, pos, '-o');
 
 
 
